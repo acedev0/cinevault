@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=78", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cinevault"
+version = "1.1.0"
+description = "Search a Telegram film bot and stream returned files without storing originals"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Ace" }]
+dependencies = [
+  "fastapi==0.116.1",
+  "uvicorn[standard]==0.35.0",
+  "Telethon==1.44.0",
+  "cryptography==45.0.7",
+  "argon2-cffi==25.1.0",
+  "Jinja2==3.1.6",
+  "python-multipart==0.0.20",
+  "itsdangerous==2.2.0",
+  "Pillow==11.3.0",
+]
+
+[project.scripts]
+cinevault = "cinevault.cli:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["cinevault*"]
+
+[tool.setuptools.package-data]
+cinevault = ["templates/*.html", "static/**/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["pytests"]
+asyncio_mode = "auto"
+pythonpath = ["."]

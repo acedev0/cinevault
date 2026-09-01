@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}{{ config.bot_title }} · CineVault{% endblock %}
+{% block body_class %}app-body netflix-body{% endblock %}
+{% block body %}
+{% set featured = featured_item %}
+<div class="netflix-app">
+  <header class="netflix-nav">
+    <a class="netflix-brand" href="/" aria-label="CineVault home">CINE<span>VAULT</span></a>
+    <nav aria-label="Library sections">
+      <a class="{% if kind == 'all' %}active{% endif %}" href="/?kind=all&amp;sort={{ sort }}">Home</a>
+      <a class="{% if kind == 'video' %}active{% endif %}" href="/?kind=video&amp;sort={{ sort }}">Movies &amp; TV</a>
+      <a class="{% if kind == 'audio' %}active{% endif %}" href="/?kind=audio&amp;sort={{ sort }}">Audio</a>
+      <a class="{% if kind == 'file' %}active{% endif %}" href="/?kind=file&amp;sort={{ sort }}">Files</a>
+    </nav>
+    <form class="netflix-search bot-search-bar" action="/api/bot/search" method="post" role="search" data-bot-search>
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+      <input name="query" type="search" placeholder="Search {{ config.bot_title }}" aria-label="Search Telegram film bot" minlength="2" maxlength="120" required autocomplete="off">
+      <button type="submit">Search</button>
+    </form>
+    <div class="netflix-nav-actions">
+      <span class="access-pill {{ config.access_mode }}">{{ config.access_mode }}</span>
+      <form method="post" action="/prune" data-prune-form>
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <button class="nav-icon-button" type="submit" data-prune-button title="Remove files deleted from Telegram" aria-label="Check Telegram files">
+          <svg viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.1 9A7 7 0 0 1 18 6l2 2M17.9 15A7 7 0 0 1 6 18l-2-2"/></svg>
+        </button>
+      </form>
+      {% if config.access_mode == 'private' %}
+      <form method="post" action="/logout">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <button class="profile-avatar" type="submit" title="Sign out">{{ config.web_username[0]|upper }}</button>
+      </form>
+      {% endif %}
+    </div>
+  </header>
+
+  <main>
+    <section class="netflix-hero{% if not featured %} empty{% endif %}">
+      {% if featured %}<img class="hero-art" src="/thumbnail/{{ featured.id }}?v=3" alt="" fetchpriority="high">{% endif %}
+      <div class="hero-vignette"></div>
+      <div class="hero-copy">
+        <span class="hero-kicker"><i></i> Streamed live from Telegram</span>
+        <h1>{% if featured %}{{ featured.title }}{% else %}Your private cinema{% endif %}</h1>
+        <p>{% if featured and featured.caption %}{{ featured.caption[:230] }}{% else %}Find it. Stream it. CineVault requests only the byte ranges you watch and never stores the complete source film on this server.{% endif %}</p>
+        <div class="hero-actions">
+          {% if featured %}<a class="hero-play" href="/media/{{ featured.id }}?{{ context_query }}"><svg viewBox="0 0 24 24"><path d="m8 5 11 7-11 7V5Z"/></svg>Play</a>{% endif %}
+          <button class="hero-info" type="button" data-focus-bot><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.1"/></svg>Find a movie</button>
+        </div>
+      </div>
+      <div class="hero-count"><strong>{{ stats.total }}</strong><span>ready now</span></div>
+    </section>
+
+    {% if telegram_error %}
+    <div class="connection-banner" role="alert"><strong>Telegram connection needs attention</strong><span>{{ telegram_error }}</span></div>
+    {% endif %}
+
+    <section class="netflix-bot-panel" data-bot-results aria-live="polite" aria-busy="false">
+      <div class="bot-discovery-intro" data-bot-empty>
+        <span class="bot-orbit"><svg viewBox="0 0 24 24"><path d="M4 11 20 4l-4 16-5-5-3 2 1-4 7-5-8 4-4-1Z"/></svg></span>
+        <div><span class="eyebrow">Live movie search</span><h2>Search the complete bot catalogue</h2><p>Use the search box above, then choose language, resolution, category, result, and Telegram pagination without leaving this screen.</p></div>
+      </div>
+      <div class="bot-loading" data-bot-loading hidden><span class="loader-spinner"></span><div><strong data-bot-loading-title>Searching Telegram</strong><p>Keeping this request isolated so results cannot get mixed.</p></div></div>
+      <div class="bot-result-content" data-bot-content hidden>
+        <div class="bot-result-heading"><div><span class="eyebrow">{{ config.bot_title }}</span><h2 data-bot-title>Choose what to watch</h2></div><button type="button" class="bot-close" data-bot-close aria-label="Close results">×</button></div>
+        <p class="bot-message" data-bot-message></p>
+        <div class="bot-filter-actions" data-bot-filters></div>
+        <div class="bot-result-actions" data-bot-actions></div>
+        <div class="bot-navigation" data-bot-navigation></div>
+      </div>
+    </section>
+
+    <section class="netflix-library" id="library">
+      <div class="netflix-section-heading">
+        <div><span class="eyebrow">Your list</span><h2>{% if query %}Results for “{{ query }}”{% elif kind == 'video' %}Movies &amp; TV{% elif kind == 'photo' %}Photos{% elif kind == 'audio' %}Audio{% elif kind == 'file' %}Files &amp; subtitles{% else %}Popular in your vault{% endif %}</h2></div>
+        <form class="saved-search" action="/" method="get" role="search">
+          <input type="hidden" name="kind" value="{{ kind }}">
+          <input type="hidden" name="sort" value="{{ sort }}">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+          <input type="search" name="q" value="{{ query }}" placeholder="Search your saved list" maxlength="120" aria-label="Search your saved library">
+        </form>
+      </div>
+
+      <div class="netflix-toolbar">
+        <div class="filter-chips">
+          <a class="chip {% if kind == 'all' %}active{% endif %}" href="/?kind=all&amp;sort={{ sort }}">All <em>{{ stats.total }}</em></a>
+          <a class="chip {% if kind == 'video' %}active{% endif %}" href="/?kind=video&amp;sort={{ sort }}">Video <em>{{ stats.videos }}</em></a>
+          <a class="chip {% if kind == 'photo' %}active{% endif %}" href="/?kind=photo&amp;sort={{ sort }}">Photos <em>{{ stats.photos }}</em></a>
+          <a class="chip {% if kind == 'audio' %}active{% endif %}" href="/?kind=audio&amp;sort={{ sort }}">Audio <em>{{ stats.audios }}</em></a>
+          <a class="chip {% if kind == 'file' %}active{% endif %}" href="/?kind=file&amp;sort={{ sort }}">Files <em>{{ stats.files }}</em></a>
+        </div>
+        <div class="library-controls">
+          <button class="view-switch{% if sort == 'random' %} active{% endif %}" type="button" role="switch" aria-checked="{% if sort == 'random' %}true{% else %}false{% endif %}" data-random-toggle title="Shuffle the complete library"><svg viewBox="0 0 24 24"><path d="M16 3h5v5M4 17l4.8-4.8M21 16v5h-5M15.5 8.5 21 3M4 6h2.5c2.2 0 3.4 1 4.6 3l1.8 3c1.2 2 2.4 3 4.6 3H21"/></svg><span>Shuffle</span><i></i></button>
+          <button class="view-switch active" type="button" role="switch" aria-checked="true" data-infinite-toggle title="Load more as you scroll"><svg viewBox="0 0 24 24"><path d="M12 4v14M7 13l5 5 5-5"/></svg><span>Infinite</span><i></i></button>
+          <form class="sort-form" action="/" method="get">
+            <input type="hidden" name="kind" value="{{ kind }}">
+            {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+            {% if sort == 'random' %}<input type="hidden" name="seed" value="{{ seed }}">{% endif %}
+            <select name="sort" data-auto-submit aria-label="Sort saved media">
+              <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Recently added</option>
+              <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Oldest</option>
+              <option value="name" {% if sort == 'name' %}selected{% endif %}>A–Z</option>
+              <option value="largest" {% if sort == 'largest' %}selected{% endif %}>Largest</option>
+              <option value="random" {% if sort == 'random' %}selected{% endif %}>Random</option>
+            </select>
+          </form>
+        </div>
+      </div>
+
+      {% if items %}
+      <section class="media-grid netflix-grid" aria-label="Saved media" data-media-grid aria-busy="false">{% include "media_cards.html" %}</section>
+      {% if has_more %}<div class="infinite-loader" data-infinite-loader data-offset="{{ items|length }}" data-total="{{ total }}" data-seed="{{ seed }}" role="status" aria-live="polite"><span class="loader-spinner"></span><p data-loader-message>Loading more titles…</p><button type="button" data-loader-retry>Load more</button></div>{% endif %}
+      {% else %}
+      <section class="empty-state"><span><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="3"/><path d="m9 10 6 4M15 10l-6 4"/></svg></span><h2>No titles here yet</h2><p>Search the film bot above and choose a result. Its file will appear here without copying the original to this VPS.</p></section>
+      {% endif %}
+      <p class="poster-credit">Portrait artwork is generated locally from Telegram previews; no catalogue titles are sent to a third-party metadata service.</p>
+    </section>
+  </main>
+  <div class="toast" data-toast role="status" aria-live="polite"></div>
+</div>
+{% endblock %}

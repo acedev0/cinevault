@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}{{ item.title }} · CineVault{% endblock %}
+{% block body_class %}watch-body netflix-body{% endblock %}
+{% block scripts %}{% if item.kind == 'video' %}<script src="/static/js/player.js" defer></script>{% endif %}{% endblock %}
+{% block body %}
+<header class="watch-topbar">
+  <a class="brand" href="{{ back_url }}">
+    <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8.5 7.25h7a3.25 3.25 0 0 1 3.25 3.25v3A3.25 3.25 0 0 1 15.5 16.75h-7a3.25 3.25 0 0 1-3.25-3.25v-3A3.25 3.25 0 0 1 8.5 7.25Z"/><path class="mark-fill" d="m10.3 9.7 4.45 2.3-4.45 2.3V9.7Z"/></svg></span>
+    <span>CineVault</span>
+  </a>
+  <a class="back-link" href="{{ back_url }}"><svg viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg>Back to library</a>
+</header>
+
+<main class="watch-layout">
+  <section class="watch-primary">
+    <div class="player-shell {% if item.kind == 'photo' %}photo-player{% elif item.kind == 'video' %}video-player{% else %}document-player{% endif %}"
+      {% if item.kind == 'video' %}
+      data-player
+      data-title="{{ item.title }}"
+      data-next-url="{{ next_url }}"
+      data-previous-url="{{ previous_url }}"
+      data-artwork="/poster/{{ item.id }}?v=3"
+      tabindex="0"
+      aria-label="Video player for {{ item.title }}"
+      {% endif %}>
+      {% if item.kind == 'video' %}
+      <video data-player-video controls playsinline preload="metadata" poster="/poster/{{ item.id }}?v=3">
+        <source src="/stream/{{ item.id }}" type="{{ item.mime_type }}">
+        Your browser cannot play this video format.
+      </video>
+
+      <button class="player-center-button" type="button" data-player-toggle aria-label="Play video">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 9 6-9 6V6Z"/></svg>
+      </button>
+      <div class="player-spinner" data-player-spinner aria-hidden="true"></div>
+      <div class="player-feedback" data-player-feedback aria-live="polite"></div>
+
+      <div class="player-controls" data-player-controls>
+        <div class="player-progress-wrap">
+          <input class="player-progress" data-player-progress type="range" min="0" max="1000" step="1" value="0" aria-label="Video progress" aria-valuetext="0:00 of 0:00">
+        </div>
+        <div class="player-control-row">
+          <div class="player-control-group player-control-left">
+            <button class="player-control" type="button" data-player-play aria-label="Play">
+              <svg data-icon-play viewBox="0 0 24 24"><path d="m8 5 11 7-11 7V5Z"/></svg>
+              <svg data-icon-pause viewBox="0 0 24 24" hidden><path d="M7 5h4v14H7zM14 5h4v14h-4z"/></svg>
+            </button>
+            <button class="player-control" type="button" data-player-next aria-label="Next video" {% if not next_url %}disabled{% endif %}>
+              <svg viewBox="0 0 24 24"><path d="m6 5 10 7-10 7V5ZM18 5v14"/></svg>
+            </button>
+            <div class="player-volume">
+              <button class="player-control" type="button" data-player-mute aria-label="Mute">
+                <svg data-icon-volume viewBox="0 0 24 24"><path d="M5 10v4h4l5 4V6l-5 4H5ZM17 9c1.4 1.7 1.4 4.3 0 6M19.5 6.5c3.1 3.1 3.1 7.9 0 11"/></svg>
+                <svg data-icon-muted viewBox="0 0 24 24" hidden><path d="M5 10v4h4l5 4V6l-5 4H5ZM17 10l4 4M21 10l-4 4"/></svg>
+              </button>
+              <input class="player-volume-range" data-player-volume type="range" min="0" max="1" step="0.05" value="1" aria-label="Volume">
+            </div>
+            <span class="player-time"><span data-player-current>0:00</span><i>/</i><span data-player-duration>0:00</span></span>
+          </div>
+
+          <div class="player-control-group player-control-right">
+            <button class="player-control player-auto-next" type="button" data-player-auto-next aria-pressed="true" aria-label="Autoplay next video" title="Autoplay next">
+              <span>Auto</span><i aria-hidden="true"></i>
+            </button>
+            <div class="player-menu-wrap">
+              <button class="player-control player-speed-button" type="button" data-player-speed-menu-toggle aria-expanded="false" aria-label="Playback speed">
+                <span data-player-speed-label>1×</span>
+              </button>
+              <div class="player-menu speed-menu" data-player-speed-menu hidden role="menu" aria-label="Playback speed">
+                <p>Playback speed</p>
+                {% for speed in ['0.25', '0.5', '0.75', '1', '1.25', '1.5', '1.75', '2'] %}
+                <button type="button" role="menuitemradio" aria-checked="{% if speed == '1' %}true{% else %}false{% endif %}" data-player-speed="{{ speed }}">{{ speed }}×</button>
+                {% endfor %}
+              </div>
+            </div>
+            <button class="player-control" type="button" data-player-shortcuts aria-label="Keyboard shortcuts" title="Keyboard shortcuts">
+              <span class="player-question">?</span>
+            </button>
+            <button class="player-control" type="button" data-player-pip aria-label="Picture in picture" title="Picture in picture">
+              <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><rect x="12" y="11" width="7" height="5" rx="1"/></svg>
+            </button>
+            <button class="player-control" type="button" data-player-theatre aria-pressed="false" aria-label="Theatre mode" title="Theatre mode">
+              <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15h18"/></svg>
+            </button>
+            <button class="player-control" type="button" data-player-fullscreen aria-label="Full screen" title="Full screen (F)">
+              <svg data-icon-fullscreen viewBox="0 0 24 24"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/></svg>
+              <svg data-icon-exit-fullscreen viewBox="0 0 24 24" hidden><path d="M3 8h5V3M21 8h-5V3M3 16h5v5M21 16h-5v5"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="shortcut-panel" data-player-shortcut-panel hidden role="dialog" aria-label="Keyboard shortcuts">
+        <div class="shortcut-heading"><strong>Keyboard shortcuts</strong><button type="button" data-player-shortcuts-close aria-label="Close shortcuts">×</button></div>
+        <dl>
+          <div><dt>Space / K</dt><dd>Play or pause</dd></div>
+          <div><dt>← / →</dt><dd>Seek 5 seconds</dd></div>
+          <div><dt>J / L</dt><dd>Seek 10 seconds</dd></div>
+          <div><dt>↑ / ↓</dt><dd>Volume</dd></div>
+          <div><dt>M</dt><dd>Mute</dd></div>
+          <div><dt>F</dt><dd>Full screen</dd></div>
+          <div><dt>T / I</dt><dd>Theatre / picture in picture</dd></div>
+          <div><dt>C</dt><dd>Toggle captions</dd></div>
+          <div><dt>&lt; / &gt;</dt><dd>Playback speed</dd></div>
+          <div><dt>0–9</dt><dd>Jump through video</dd></div>
+          <div><dt>N / P</dt><dd>Next / previous</dd></div>
+        </dl>
+      </div>
+      {% elif item.kind == 'photo' %}
+      <img src="/stream/{{ item.id }}" alt="{{ item.title }}">
+      {% elif item.kind == 'audio' %}
+      <div class="audio-stage"><img src="/poster/{{ item.id }}?v=3" alt=""><div><span>Now playing</span><strong>{{ item.title }}</strong></div></div>
+      <audio controls preload="metadata" src="/stream/{{ item.id }}">Your browser cannot play this audio format.</audio>
+      {% else %}
+      <div class="file-stage"><img src="/poster/{{ item.id }}?v=3" alt=""><div><span>{{ item.mime_type }}</span><strong>{{ item.filename }}</strong><a href="/stream/{{ item.id }}?download=1">Download or open file</a></div></div>
+      {% endif %}
+    </div>
+    <div class="watch-info">
+      <span class="watch-kind"><i></i>{{ item.kind }}</span>
+      <h1>{{ item.title }}</h1>
+      <div class="watch-meta">
+        <span><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>{{ item.message_date|date }}</span>
+        <span><svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/></svg>{{ item.size_bytes|filesize }}</span>
+        {% if item.width and item.height %}<span><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="m8 15 3-3 2 2 2-2 2 3"/></svg>{{ item.width }}×{{ item.height }}</span>{% endif %}
+        {% if item.duration_seconds %}<span><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="m10 8 6 4-6 4V8Z"/></svg>{{ item.duration_seconds|duration }}</span>{% endif %}
+      </div>
+      {% if item.caption %}<div class="caption-box"><p>{{ item.caption }}</p></div>{% endif %}
+      {% if browser_compat_warning %}<div class="format-note"><strong>Browser compatibility</strong><span>This container may not play in every browser. If playback fails, use the original file button.</span></div>{% endif %}
+      <div class="source-strip">
+        <span class="telegram-glyph"><svg viewBox="0 0 24 24"><path d="m4 11 15-6-3 14-5-4-3 2 1-4 7-5-8 4-4-1Z"/></svg></span>
+        <div><strong>Streaming from {{ config.bot_title }}</strong><span>The original file remains in Telegram.</span></div>
+        <div class="source-actions">
+          <button class="source-download" type="button" data-stream-link data-media-id="{{ item.id }}" data-csrf="{{ csrf }}">Copy VLC link</button>
+          <a class="source-download" href="/stream/{{ item.id }}?download=1">Original file</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <aside class="related-panel">
+    <div class="related-heading"><div><span>{% if next_item %}Up next{% else %}Your vault{% endif %}</span><h2>More from your vault</h2></div><a href="{{ back_url }}">View all</a></div>
+    <div class="related-list">
+      {% for related_item in related %}
+      <a class="related-card" href="/media/{{ related_item.id }}?{{ context_query }}">
+        <span class="related-thumb">
+          <img src="/poster/{{ related_item.id }}?v=3" alt="" loading="lazy" width="240" height="360">
+          {% if related_item.duration_seconds %}<em>{{ related_item.duration_seconds|duration }}</em>{% endif %}
+        </span>
+        <span class="related-copy"><strong>{{ related_item.title }}</strong><small>{{ related_item.message_date|date }} · {{ related_item.size_bytes|filesize }}</small></span>
+      </a>
+      {% else %}
+      <p class="no-related">No other media has been indexed yet.</p>
+      {% endfor %}
+    </div>
+  </aside>
+</main>
+{% endblock %}

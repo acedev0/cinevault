@@ -1,0 +1,51 @@
+name: Bug report
+description: Report a reproducible CineVault problem
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not paste Telegram API hashes, login codes, session strings, passwords, signed stream URLs, or logs containing secrets.
+  - type: input
+    id: version
+    attributes:
+      label: CineVault version
+      description: Run `cinevaultctl version`.
+      placeholder: CineVault 1.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: Installation type
+      options:
+        - VPS installer
+        - Docker Compose
+        - Replit
+        - Local start.sh
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Include the expected result and the actual result.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. Open …
+        2. Click …
+        3. See …
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized diagnostics
+      description: Paste relevant output from `sudo cinevaultctl doctor` after removing secrets and public links.
+      render: shell

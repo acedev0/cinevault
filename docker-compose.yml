@@ -1,0 +1,11 @@
+services:
+  cinevault:
+    build: .
+    container_name: cinevault
+    restart: unless-stopped
+    ports:
+      - "8765:8765"
+    environment:
+      CINEVAULT_DATA_DIR: /data
+    volumes:
+      - ./data:/data
